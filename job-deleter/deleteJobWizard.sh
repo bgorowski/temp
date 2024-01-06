@@ -5,7 +5,7 @@
 
 main()
 {
-    # global error return codes
+    # return codes
     ok=0
     invalid_argument_number=1
     job_list_file_doesnt_exist=2
@@ -23,6 +23,7 @@ main()
 
     if [ $validate_input_result != $ok ]; then
         return $validate_input_result;
+
     else
         check_jobs_status $job_list_file
         check_jobs_status_result=$?
@@ -78,17 +79,12 @@ validate_input()
     return $ok;
 }
 
-truncate_whitespaces()
-{
-    local str=$(echo $1 | tr -d ' ')
-    echo $str
-}
-
 check_jobs_status()
 {
     local job_list_file=$1
     
-    # arrays to hold job names with that status
+    # https://techdocs.broadcom.com/us/en/ca-enterprise-software/intelligent-automation/autosys-workload-automation/12-0/reference/ae-system-states/status.html
+    # arrays to hold job names with particular status
     local activated=()
     local failure=()
     local inactive=()
@@ -108,14 +104,15 @@ check_jobs_status()
     local doesnt_exist=()
     local unsupported=()
 
-    echo -e "Checking jobs' status ${DARK_GRAY}[IN PROGRESS]${NC}\n"
+    echo -e "Checking jobs' status...\n"
 
     while read -r line || [ -n "$line" ];
     do 
         if [ "$line" != "" ]; then
-            local jobname=`truncate_whitespaces "$line"`
+            local jobname=$line
             echo -n "$jobname: " 
-            local autostatus_output=$(./autostatus.sh)
+            # local autostatus_output=$(./autostatus.sh)
+            local autostatus_output=$(autostatus -j ${jobname})
             if [[ "$autostatus_output" == *"Invalid job/box name:"* ]]; then
                 job_status="DOESNT_EXIST" 
             else
@@ -212,10 +209,14 @@ backup_job_definitions()
     while read -r line || [ -n "$line" ];
     do 
         if [ "$line" != "" ]; then
-            printf '%s %s\n' "delete_job:" "$line" >> "$task_name"
+            local jobname=$line
+            command autorep -j "$jobname" -q >> "${task_name}_backup.jil"
+            # command ./autorep.sh >> "${task_name}_backup.jil"
         fi
-
     done < "$job_list_file"
+
+    echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC}"
+    return $ok;
 }
 
 create_deletion_jil()
@@ -226,10 +227,13 @@ create_deletion_jil()
     while read -r line || [ -n "$line" ];
     do 
         if [ "$line" != "" ]; then
-            printf '%s %s\n' "delete_job:" "$line" >> "${task_name}_added"
+            local jobname=$line
+            printf '%s %s\n' "delete_job:" "$jobname" >> "${task_name}_deletion.jil"   
         fi
-
     done < "$job_list_file"
+
+    echo -e "Creating deletion JIL file ${GREEN}[OK]${NC}"
+    return $ok;
 }
 
 main "$@"
