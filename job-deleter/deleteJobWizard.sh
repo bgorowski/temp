@@ -104,7 +104,7 @@ check_jobs_status()
     local doesnt_exist=()
     local unsupported=()
 
-    echo -e "Checking jobs' status...\n"
+    echo -e "Checking jobs' status..."
 
     while read -r line || [ -n "$line" ];
     do 
@@ -184,8 +184,6 @@ check_jobs_status()
         fi
     done < "$job_list_file"
 
-    echo ""
-
     local nonexistent_jobs_number="${#doesnt_exist[@]}"
     local unsupported_jobs_number="${#unsupported[@]}"
     local running_jobs_number="${#running[@]}"
@@ -205,17 +203,21 @@ backup_job_definitions()
 {
     local job_list_file=$1
     local task_name=$2
-     
+    
+    echo "Creating backup JIL file with job definitions..."
+
     while read -r line || [ -n "$line" ];
     do 
         if [ "$line" != "" ]; then
             local jobname=$line
+            echo -n "Creating backup of: ${jobname} "
             command autorep -j "$jobname" -q >> "${task_name}_backup.jil"
+            echo -e "${GREEN}[OK]${NC}"
             # command ./autorep.sh >> "${task_name}_backup.jil"
         fi
     done < "$job_list_file"
 
-    echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC}"
+    echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC} ${task_name}_backup.jil created"
     return $ok;
 }
 
@@ -232,7 +234,7 @@ create_deletion_jil()
         fi
     done < "$job_list_file"
 
-    echo -e "Creating deletion JIL file ${GREEN}[OK]${NC}"
+    echo -e "Creating deletion JIL file ${GREEN}[OK]${NC} ${task_name}_deletion.jil"
     return $ok;
 }
 
