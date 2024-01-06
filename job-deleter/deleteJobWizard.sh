@@ -217,7 +217,9 @@ backup_job_definitions()
         fi
     done < "$job_list_file"
 
-    echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC} ${task_name}_backup.jil created"
+    echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC}"
+    echo "${task_name}_backup.jil file created"
+
     return $ok;
 }
 
@@ -234,7 +236,9 @@ create_deletion_jil()
         fi
     done < "$job_list_file"
 
-    echo -e "Creating deletion JIL file ${GREEN}[OK]${NC} ${task_name}_deletion.jil"
+    echo -e "Creating deletion JIL file ${GREEN}[OK]${NC}"
+    echo "${task_name}_deletion.jil file created"
+
     return $ok;
 }
 
