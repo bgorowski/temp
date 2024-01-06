@@ -1,0 +1,20 @@
+
+
+
+autostatus -J jobname
+
+returns examples:
+SUCCESS/ON_NOEXEC
+
+https://techdocs.broadcom.com/us/en/ca-enterprise-software/intelligent-automation/autosys-workload-automation/12-0/reference/ae-system-states/status.html
+
+
+CAUAJM_E_50004 Invalid job/box name: jobname
+
+
+
+
+
+
+
+autorep -j jobname -q
