@@ -126,9 +126,11 @@ get_maxruns()
     if [[ $active_maxruns == 0 ]]; then
         echo "There are no active maxruns from today."
     else
-        echo "There are ${active_maxruns} from today."
+        echo "There are ${active_maxruns} active maxruns from today."
         #todo: print summary with active maxruns listed
     fi
+
+    echo ""
 
     return $OK;
 }
