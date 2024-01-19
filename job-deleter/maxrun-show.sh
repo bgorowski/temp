@@ -99,7 +99,7 @@ get_maxruns()
     do 
         local jobname=$(echo ${line} | awk '{ print $2 }')
         local maxrun_start_time=$(echo ${line} | awk '{ print $1 }')
-        $maxrun_start_time=$(echo ${maxrun_start_time%?})
+        $maxrun_start_time=$(echo "${maxrun_start_time%?}")
         local actual_start_time=$(autorep -j ${jobname} | awk 'NR==4 { print $3 }') 
         
         echo -e "${jobname} ${maxrun_start_time} ${actual_start_time}"
