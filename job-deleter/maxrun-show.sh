@@ -75,23 +75,40 @@ validate_input()
 
 # grep -h "ALARM: MAXRUNALARM" $AUTOUSER/out/event_demon.$AUTOSERV | awk '{ print $9 }'
 
+
+
 get_maxruns()
 {   
-    echo -e "Checking todays maxruns:\n"
+    echo -e "\nChecking todays maxruns:\n"
     
-    local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" ${AUTOUSER}/out/event_demon.${AUTOSERV} | awk '{ print $9 }')
-    # local todays_maxruns=$(ls -alh | grep ${USER} | awk '{ print $5 }')
-    
+    local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" ${AUTOUSER}/out/event_demon.${AUTOSERV} | awk '{ printf "%s\t%s\n",$2,$9 }')
+    # local todays_maxruns=$(ls -alh | grep ${USER} | awk '{ printf "%s\t%s\n",$5,$6 }')
+
+    maxrun_time="07:23:41]"
+    last_start_time="07:23:40]"
+
+    if [[ $maxrun_time = $last_start_time ]]; then
+        echo "MAXRUN!"
+    elif [[ $maxrun_time < $last_start_time ]]; then
+        echo "NO MAXRUN"
+    fi
+
+    echo ${date%?}
+
     while IFS= read -r line
     do 
-        local jobname=$line
-        local autostatus_output=$(autostatus -j ${jobname})
+        local jobname=$(echo ${line} | awk '{ print $2 }')
+        local maxrun_start_time=$(echo ${line} | awk '{ print $1 }')
+        local actual_start_time=$(autorep -j ${jobname} | awk 'NR==4 { print $3 }') 
+        
+        echo -e "${jobname} ${maxrun_start_time} ${actual_start_time}"
+        # local autostatus_output=$(autostatus -j ${jobname})
 
-        if [[ "$autostatus_output" == "RUNNING" ]]; then
-            echo -e "${jobname}\t${GREEN}[RUNNING]${NC}"
-        else
-            echo -e "${DARK_GRAY}${jobname}\t[${autostatus_output}]${NC}"
-        fi
+        # if [[ "$autostatus_output" == "RUNNING" ]]; then
+        #     echo -e "${jobname}\t${GREEN}[RUNNING]${NC}"
+        # else
+        #     echo -e "${DARK_GRAY}${jobname}\t[${autostatus_output}]${NC}"
+        # fi
 
     done <<< "$todays_maxruns"
 
