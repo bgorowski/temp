@@ -76,8 +76,6 @@ validate_input()
     return $OK;
 }
 
-# grep -h "ALARM: MAXRUNALARM" $AUTOUSER/out/event_demon.$AUTOSERV | awk '{ print $9 }'
-
 check_if_active_maxrun()
 {
     local maxrun_start_time=$1
@@ -92,9 +90,10 @@ check_if_active_maxrun()
 
 get_maxruns()
 {   
-    echo -e "\nChecking todays maxruns:\n"
+    echo -e "\nChecking todays maxruns for active ones:\n"
     
     local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" ${AUTOUSER}/out/event_demon.${AUTOSERV} | awk '{ printf "%s\t%s\n",$2,$9 }')
+    local active_maxruns=0
 
     while IFS= read -r line
     do 
@@ -110,20 +109,29 @@ get_maxruns()
             local result=$?
 
             if [[ "$result" == $ACTIVE_MAXRUN ]]; then
-                echo -e "${jobname}\t${GREEN}[ACTIVE MAXRUN]${NC}"
+                echo -e "${jobname}   ${GREEN}[ACTIVE MAXRUN]${NC}"
+                ((active_maxruns++))
             else
-                echo -e "${DARK_GRAY}${jobname}\t[RUNNING - NO MAXRUN]${NC}"
+                echo -e "${DARK_GRAY}${jobname}   [RUNNING - NO MAXRUN]${NC}"
             fi
 
         else
-            echo -e "${DARK_GRAY}${jobname}\t[${job_status}]${NC}"
+            echo -e "${DARK_GRAY}${jobname}   [${job_status}]${NC}"
         fi
 
     done <<< "$todays_maxruns"
 
+    echo ""
+
+    if [[ $active_maxruns == 0 ]]; then
+        echo "There are no active maxruns from today."
+    else
+        echo "There are ${active_maxruns} from today."
+        #todo: print summary with active maxruns listed
+    fi
+
     return $OK;
 }
-
 
 main "$@"
 

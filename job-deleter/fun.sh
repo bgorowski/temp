@@ -15,11 +15,12 @@ echo $result
 
 test()
 {
-    local maxrun_time_dirty="07:23:41]"
+    local active_maxruns=0;
+    
+    ((active_maxruns++))
+    ((active_maxruns++))
 
-    maxrun_time_dirty=${maxrun_time_dirty%?}
-
-    echo $maxrun_time_dirty
+    echo $active_maxruns
 }
 
 test
