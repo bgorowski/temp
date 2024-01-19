@@ -80,8 +80,8 @@ validate_input()
 
 check_if_active_maxrun()
 {
-    local maxrun_start_time=$2
-    local last_start_time=$3
+    local maxrun_start_time=$1
+    local last_start_time=$2
     
     if [[ $maxrun_start_time = $last_start_time ]]; then
         return $ACTIVE_MAXRUN
@@ -116,7 +116,7 @@ get_maxruns()
             fi
 
         else
-            echo -e "${DARK_GRAY}${jobname}\t[${autostatus_output}]${NC}"
+            echo -e "${DARK_GRAY}${jobname}\t[${job_status}]${NC}"
         fi
 
     done <<< "$todays_maxruns"
