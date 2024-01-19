@@ -78,19 +78,20 @@ validate_input()
 get_maxruns()
 {   
     echo "Checking todays maxruns..."
-
-    local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" $AUTOUSER/out/event_demon.$AUTOSERV | awk '{ print $9 }')
-
-    while read -r line || [ -n "$line" ];
+    
+    local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" ${AUTOUSER}/out/event_demon.${AUTOSERV} | awk '{ print $9 }')
+    # local todays_maxruns=$(ls -alh | grep ${USER} | awk '{ print $5 }')
+    
+    while IFS= read -r line
     do 
-        if [ "$line" != "" ]; then
+        
             local jobname=$line
-            echo -n "MAXRUN: ${jobname} "
+            echo -e "MAXRUN: ${jobname}"
             # command autorep -j "$jobname" -q >> "${task_name}_backup.jil"
             # command ./autorep.sh >> "${task_name}_backup.jil"
             # echo -e "${GREEN}[OK]${NC}"
-        fi
-    done < "$todays_maxruns"
+
+    done <<< "$todays_maxruns"
 
     # echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC}"
     # echo "${task_name}_backup.jil file created"
