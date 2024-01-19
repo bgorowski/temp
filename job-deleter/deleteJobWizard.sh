@@ -3,40 +3,6 @@
 #   author: Bartlomiej Gorowski
 ###############################
 
-main()
-{
-    # return codes
-    ok=0
-    invalid_argument_number=1
-    job_list_file_doesnt_exist=2
-    invalid_task_name=3
-    invalid_job_names=4
-
-    local argc=$#
-    local argv=$@
-
-    local job_list_file=$1
-    local task_name=$2
-
-    validate_input $argc $argv
-    validate_input_result=$?
-
-    if [ $validate_input_result != $ok ]; then
-        return $validate_input_result;
-
-    else
-        check_jobs_status $job_list_file
-        check_jobs_status_result=$?
-        
-        if [ $check_jobs_status_result != $ok ]; then
-            return $check_jobs_status_result;
-        else
-            backup_job_definitions $job_list_file $task_name
-            create_deletion_jil $job_list_file $task_name
-        fi
-    fi  
-}
-
 # bash text output color codes used in functions below
 NC='\033[0m' # No Color
 BLACK='\033[0;30m'
@@ -48,6 +14,41 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 LIGHT_GRAY='\033[0;37m'
 DARK_GRAY='\033[1;30m'
+
+# return codes
+OK=0
+INVALID_ARGUMENT_NUMBER=1
+JOB_LIST_FILE_DOESNT_EXIST=2
+INVALID_TASK_NAME=3
+INVALID_JOB_NAMES=4
+
+
+main()
+{
+    local argc=$#
+    local argv=$@
+
+    local job_list_file=$1
+    local task_name=$2
+
+    validate_input $argc $argv
+    validate_input_result=$?
+
+    if [ $validate_input_result != $OK ]; then
+        return $validate_input_result;
+
+    else
+        check_jobs_status $job_list_file
+        check_jobs_status_result=$?
+        
+        if [ $check_jobs_status_result != $OK ]; then
+            return $check_jobs_status_result;
+        else
+            backup_job_definitions $job_list_file $task_name
+            create_deletion_jil $job_list_file $task_name
+        fi
+    fi  
+}
 
 validate_input()
 {
@@ -61,22 +62,22 @@ validate_input()
         echo -e "${GREEN}USAGE:${NC}\n$script_filename file_with_job_names name_of_task\n" >&2
         echo -e "${GREEN}EXAMPLE:${NC}\n$script_filename peadl_to_be_deleted.txt SCTASK250325\n" >&2
         #echo -e "${DARK_GRAY}OUTPUT:${NC}\n"
-        return $invalid_argument_number
+        return $INVALID_ARGUMENT_NUMBER
     fi
 
     if ! [ -f "$jobs_list_filename" ]; then
         echo -e "${RED}[ERROR]${NC} File $jobs_list_filename doesn't exist" >&2
-        return $job_list_file_doesnt_exist
+        return $JOB_LIST_FILE_DOESNT_EXIST
     fi
 
     if ! [[ "$task_name" =~ ^[0-9A-Za-z_\ -]+$ ]]; then
         echo -e "${RED}[ERROR]${NC} Invalid SCTASK name provided" >&2
-        return $invalid_task_name
+        return $INVALID_TASK_NAME
     fi
 
     echo -e "Validating user input ${GREEN}[OK]${NC}"
 
-    return $ok;
+    return $OK;
 }
 
 check_jobs_status()
@@ -111,8 +112,8 @@ check_jobs_status()
         if [ "$line" != "" ]; then
             local jobname=$line
             echo -n "$jobname: " 
-            # local autostatus_output=$(./autostatus.sh)
-            local autostatus_output=$(autostatus -j ${jobname})
+            local autostatus_output=$(./autostatus.sh)
+            # local autostatus_output=$(autostatus -j ${jobname})
             if [[ "$autostatus_output" == *"Invalid job/box name:"* ]]; then
                 job_status="DOESNT_EXIST" 
             else
@@ -154,7 +155,7 @@ check_jobs_status()
                     running+=$jobname
                     ;;
                 STARTING)
-                    starting+=$jobname
+                    starting+=$jobnameINVALID_JOB_NAMES
                     ;;
                 SUCCESS)
                     success+=$jobname
@@ -190,12 +191,17 @@ check_jobs_status()
     local starting_jobs_number="${#starting[@]}"
     local restarting_jobs_number="${#restarting[@]}"
 
-    if [[ $nonexistent_jobs_number != 0 || $unsupported_jobs_number != 0 || $running_jobs_number != 0 || $starting_jobs_number != 0 || $restarting_jobs_number != 0 ]]; then
+    if [[   $nonexistent_jobs_number != 0 || 
+            $unsupported_jobs_number != 0 ||
+            $running_jobs_number != 0 ||
+            $starting_jobs_number != 0 ||
+            $restarting_jobs_number != 0 ]]; then
+
         echo -e "Checking jobs' status ${RED}[ERROR]${NC} One or more jobs have status disabling them from deletion" 
-        return $invalid_job_names   
+        return $INVALID_JOB_NAMES   
     else
         echo -e "Checking jobs' status ${GREEN}[OK]${NC}"
-        return $ok;
+        return $OK;
     fi
 }
 
@@ -211,16 +217,16 @@ backup_job_definitions()
         if [ "$line" != "" ]; then
             local jobname=$line
             echo -n "Creating backup of: ${jobname} "
-            command autorep -j "$jobname" -q >> "${task_name}_backup.jil"
+            # command autorep -j "$jobname" -q >> "${task_name}_backup.jil"
+            command ./autorep.sh >> "${task_name}_backup.jil"
             echo -e "${GREEN}[OK]${NC}"
-            # command ./autorep.sh >> "${task_name}_backup.jil"
         fi
     done < "$job_list_file"
 
     echo -e "Creating backup JIL file with job definitions ${GREEN}[OK]${NC}"
     echo "${task_name}_backup.jil file created"
 
-    return $ok;
+    return $OK;
 }
 
 create_deletion_jil()
@@ -239,7 +245,7 @@ create_deletion_jil()
     echo -e "Creating deletion JIL file ${GREEN}[OK]${NC}"
     echo "${task_name}_deletion.jil file created"
 
-    return $ok;
+    return $OK;
 }
 
 main "$@"
