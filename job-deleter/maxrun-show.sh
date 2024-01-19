@@ -17,6 +17,9 @@ DARK_GRAY='\033[1;30m'
 
 # return codes
 OK=0
+ACTIVE_MAXRUN=0
+NO_MAXRUN=1
+
 INVALID_ARGUMENT_NUMBER=1
 JOB_LIST_FILE_DOESNT_EXIST=2
 INVALID_TASK_NAME=3
@@ -75,41 +78,46 @@ validate_input()
 
 # grep -h "ALARM: MAXRUNALARM" $AUTOUSER/out/event_demon.$AUTOSERV | awk '{ print $9 }'
 
-
+check_if_active_maxrun()
+{
+    local maxrun_start_time=$2
+    local last_start_time=$3
+    
+    if [[ $maxrun_start_time = $last_start_time ]]; then
+        return $ACTIVE_MAXRUN
+    elif [[ $maxrun_time < $last_start_time ]]; then
+        return $NO_MAXRUN
+    fi
+}
 
 get_maxruns()
 {   
     echo -e "\nChecking todays maxruns:\n"
     
     local todays_maxruns=$(grep -h "ALARM: MAXRUNALARM" ${AUTOUSER}/out/event_demon.${AUTOSERV} | awk '{ printf "%s\t%s\n",$2,$9 }')
-    # local todays_maxruns=$(ls -alh | grep ${USER} | awk '{ printf "%s\t%s\n",$5,$6 }')
-
-    maxrun_time="07:23:41]"
-    last_start_time="07:23:40]"
-
-    if [[ $maxrun_time = $last_start_time ]]; then
-        echo "MAXRUN!"
-    elif [[ $maxrun_time < $last_start_time ]]; then
-        echo "NO MAXRUN"
-    fi
-
-    echo ${date%?}
 
     while IFS= read -r line
     do 
         local jobname=$(echo ${line} | awk '{ print $2 }')
         local maxrun_start_time=$(echo ${line} | awk '{ print $1 }')
         maxrun_start_time=${maxrun_start_time%?}
-        local actual_start_time=$(autorep -j ${jobname} | awk 'NR==4 { print $3 }') 
-        
-        echo -e "${jobname} ${maxrun_start_time} ${actual_start_time}"
-        # local autostatus_output=$(autostatus -j ${jobname})
+        local last_start_time=$(autorep -j ${jobname} | awk 'NR==4 { print $3 }')
+        local job_status=$(autostatus -j ${jobname})
 
-        # if [[ "$autostatus_output" == "RUNNING" ]]; then
-        #     echo -e "${jobname}\t${GREEN}[RUNNING]${NC}"
-        # else
-        #     echo -e "${DARK_GRAY}${jobname}\t[${autostatus_output}]${NC}"
-        # fi
+        if [[ "$job_status" == "RUNNING" ]]; then
+
+            check_if_active_maxrun $maxrun_start_time $last_start_time
+            local result=$?
+
+            if [[ "$result" == $ACTIVE_MAXRUN ]]; then
+                echo -e "${jobname}\t${GREEN}[ACTIVE MAXRUN]${NC}"
+            else
+                echo -e "${DARK_GRAY}${jobname}\t[RUNNING - NO MAXRUN]${NC}"
+            fi
+
+        else
+            echo -e "${DARK_GRAY}${jobname}\t[${autostatus_output}]${NC}"
+        fi
 
     done <<< "$todays_maxruns"
 
